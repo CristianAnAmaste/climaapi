@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta Meteorológica</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Consulta Meteorológica</h1>
+        <form action="/consulta" method="post" class="mt-3">
+            <div class="form-group">
+                <label for="estacion">Estación</label>
+                <select name="estacion" id="estacion" class="form-control" required>
+                    <select class="form-control" id="station" name="station" required>
+                        <option value="NTC">ESTACION NANTOCO</option>
+                        <option value="VDC">ESTACION VDC</option>
+                        <option value="LTZ">ESTACION LTZ</option>
+                      </select>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="startDate">Fecha de inicio</label>
+                <input type="date" name="startDate" id="startDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="endDate">Fecha de término</label>
+                <input type="date" name="endDate" id="endDate" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Consultar</button>
+        </form>
+
+        <% if (results) { %>
+            <div class="mt-5">
+                <h2>Resultados</h2>
+                <table class="table table-bordered mt-3">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>ET (mm)</th>
+                            <th>CDD (°C)</th>
+                            <th>HDD (°C)</th>
+                            <th>Temp. Alta (°C)</th>
+                            <th>Temp. Baja (°C)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% results.dailyData.forEach(result => { %>
+                            <tr>
+                                <td><%= result.date %></td>
+                                <td><%= result.et %></td>
+                                <td><%= result.cdd %></td>
+                                <td><%= result.hdd %></td>
+                                <td><%= result.tempHi %></td>
+                                <td><%= result.tempLo %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Total</th>
+                            <th><%= results.totalET %></th>
+                            <th><%= results.totalCDD %></th>
+                            <th><%= results.totalHDD %></th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>  
+                </table>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

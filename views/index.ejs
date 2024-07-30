@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGROCLIMA ATACAMA</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">DATOS METEOROLOGICOS FEAL COPIAPO</h1>
+    <form action="/get-data" method="post" class="mt-4">
+      <div class="form-group">
+        <label for="station">Estación</label>
+        <select class="form-control" id="station" name="station" required>
+          <option value="NTC">ESTACION NANTOCO</option>
+          <option value="VDC">ESTACION VDC</option>
+          <option value="LTZ">ESTACION LTZ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="startDate">Fecha de Inicio</label>
+        <input type="date" class="form-control" id="startDate" name="startDate" required>
+      </div>
+      <div class="form-group">
+        <label for="endDate">Fecha de Término</label>
+        <input type="date" class="form-control" id="endDate" name="endDate" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Consultar</button>
+    </form>
+
+    <% if (results) { %>
+      <div class="mt-5">
+        <h2>Resultados <%= stationName %></h2>
+        <table id="resultTable" class="table table-bordered mt-3">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>ET (mm)</th>
+              <th>CDD</th>
+              <th>HDD</th>
+              <th>Temp. Alta (°C)</th>
+              <th>Temp. Baja (°C)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% results.forEach(result => { %>
+              <tr>
+                <td><%= result.dateFormatted %></td>
+                <td><%= result.etSum %></td>
+                <td><%= result.cddSum %></td>
+                <td><%= result.hddSum %></td>
+                <td><%= result.tempHiMax %></td>
+                <td><%= result.tempLoMin %></td>
+                <td style="display:none;"><%= result.dateOriginal %></td> <!-- original para exportar debe estar o se desconfiguran las fechas en excel-->
+              </tr>
+            <% }); %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total <%= stationName %></th>
+              <th><%= totalET %></th>
+              <th><%= totalCdd %></th>
+              <th><%= totalHdd %></th>
+              <th></th>
+              <th></th>
+            </tr>
+          </tfoot>
+        </table>
+        <button id="exportButton" class="btn btn-success mt-3">Exportar a Excel</button>
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="alert alert-danger mt-4">
+        <%= error %>
+      </div>
+    <% } %>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const exportToExcel = () => {
+        let table = document.getElementById('resultTable'); //tabla dentro del html
+        if (!table) {
+          console.error('La tabla no se encontró en el DOM.');
+          return;
+        }
+
+        // Crear una copia de la tabla con fechas formateadas
+        let cloneTable = table.cloneNode(true);
+        let rows = cloneTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          let dateCell = row.cells[0];
+          let dateOriginal = row.cells[6].textContent; // Valor original
+          if (dateOriginal) {
+            let date = new Date(dateOriginal * 1000);
+            dateCell.textContent = date;
+          }
+        });
+
+        let workbook = XLSX.utils.table_to_book(cloneTable, { sheet: 'Datos Meteorológicos' });
+        let wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+
+        function s2ab(s) {
+          let buf = new ArrayBuffer(s.length);
+          let view = new Uint8Array(buf);
+          for (let i = 0; i < s.length; i++) {
+            view[i] = s.charCodeAt(i) & 0xFF;
+          }
+          return buf;
+        }
+
+        let blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `Datos_Meteorologicos_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      document.getElementById('exportButton').addEventListener('click', exportToExcel);
+    });
+  </script>
+</body>
+</html>
